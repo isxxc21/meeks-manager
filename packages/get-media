@@ -1,11 +1,7 @@
 
 #!/bin/bash
 
-# ==========================================
-# get-media: YouTube/TikTok to MP4/MP3/WAV
-# ==========================================
 
-# 1. Dependency Checks
 if ! command -v yt-dlp &> /dev/null; then
     echo "Error: 'yt-dlp' is not installed."
     echo "Install it via: sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp && sudo chmod a+rx /usr/local/bin/yt-dlp"
@@ -18,7 +14,6 @@ if ! command -v ffmpeg &> /dev/null; then
     exit 1
 fi
 
-# 2. Help Menu
 if [ -z "$1" ]; then
     echo "Usage: get-media <URL> [format: mp4|mp3|wav]"
     echo ""
@@ -30,14 +25,12 @@ if [ -z "$1" ]; then
 fi
 
 URL="$1"
-# Default to mp4 if the user doesn't specify a second argument
 FORMAT="${2:-mp4}"
 
 echo "Fetching media from $URL..."
 echo "Target format: $FORMAT"
 echo "--------------------------------------"
 
-# 3. Download & Convert Logic
 case "$FORMAT" in
     mp3)
         yt-dlp --extract-audio --audio-format mp3 --audio-quality 0 -o "%(title)s.%(ext)s" "$URL"
@@ -46,7 +39,6 @@ case "$FORMAT" in
         yt-dlp --extract-audio --audio-format wav -o "%(title)s.%(ext)s" "$URL"
         ;;
     mp4)
-        # Downloads the best mp4 video and best m4a audio and merges them
         yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" -o "%(title)s.%(ext)s" "$URL"
         ;;
     *)
