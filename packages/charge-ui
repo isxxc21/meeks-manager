@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# ==========================================
+# charge-ui - Fullscreen Charging Animation
+# ==========================================
+
+# Terminal Colors
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+# Configuration
+ANIM_DIR="$HOME/.local/share/charge-ui"
+# A cool public domain animated lightning GIF as a default placeholder
+DEFAULT_ANIM_URL="https://upload.wikimedia.org/wikipedia/commons/2/27/Animated_electric_lightning.gif"
+ANIM_FILE="$ANIM_DIR/charging_anim.gif"
+
+mkdir -p "$ANIM_DIR"
+
+# Dependency Check
+if ! command -v mpv &> /dev/null; then
+    echo -e "${RED}Error: 'mpv' is required for the fullscreen animation.${NC}"
+    echo "Install it via: sudo apt install mpv"
+    exit 1
+fi
+
+# Ensure there is an animation file to play
+if [ ! -f "$ANIM_FILE" ]; then
+    echo -e "${CYAN}Downloading default charging animation...${NC}"
+    curl -s -L "$DEFAULT_ANIM_URL" -o "$ANIM_FILE"
+fi
+
+# Find the battery path
+BATTERY_PATH=$(find /sys/class/power_supply -name "BAT*" | head -n 1)
+
+if [ -z "$BATTERY_PATH" ]; then
+    echo -e "${RED}Error: No battery found on this system. Are you on a desktop?${NC}"
+    exit 1
+fi
+
+play_animation() {
+    # mpv flags:
+    # --fs : Fullscreen
+    # --ontop : Stay above all other windows
+    # --no-osc : Disable the on-screen controller (play/pause bar)
+    # --no-input-default-bindings : Ignore mouse/keyboard clicks so it doesn't interrupt
+    # --image-display-duration=3 : Show the GIF for exactly 3 seconds
+    # --quiet : Suppress terminal output
+    mpv --fs --ontop --no-osc --no-input-default-bindings --image-display-duration=3 --quiet "$ANIM_FILE" >/dev/null 2>&1 &
+}
+
+# Daemon Mode Logic
+if [[ "$1" == "daemon" ]]; then
+    echo -e "${GREEN}Starting Charge-UI Daemon... (Press Ctrl+C to stop)${NC}"
+    echo -e "${INFO} Monitoring $BATTERY_PATH for charger events."
+    
+    # Get initial state
+    LAST_STATE=$(cat "$BATTERY_PATH/status")
+    
+    while true; do
+        CURRENT_STATE=$(cat "$BATTERY_PATH/status")
+        
+        # If state changed to "Charging"
+        if [[ "$CURRENT_STATE" == "Charging" && "$LAST_STATE" != "Charging" ]]; then
+            play_animation
+        fi
+        
+        LAST_STATE="$CURRENT_STATE"
+        sleep 1 # Check every 1 second
+    done
+else
+    # Run once to test the animation
+    echo -e "${CYAN}Testing the charging animation...${NC}"
+    play_animation
+fi
