@@ -49,7 +49,7 @@ play_animation() {
     # --no-input-default-bindings : Ignore mouse/keyboard clicks so it doesn't interrupt
     # --image-display-duration=3 : Show the GIF for exactly 3 seconds
     # --quiet : Suppress terminal output
-    mpv --fs --ontop --no-osc --no-input-default-bindings --image-display-duration=3 --quiet "$ANIM_FILE" >/dev/null 2>&1 &
+    mpv --fs --ontop --no-osc --osd-level=0 --no-input-cursor --no-input-default-bindings --image-display-duration=3 --quiet "$ANIM_FILE" >/dev/null 2>&1 &
 }
 
 # Daemon Mode Logic
